@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { toResponseBody } from "@/lib/download";
 import {
   convertBufferToMp3,
   extensionFromNameOrType,
@@ -70,10 +71,11 @@ export async function GET(request: Request) {
     const alreadyMp3 = isAlreadyMp3(target.pathname, upstreamType, input);
 
     if (!wantMp3 || alreadyMp3) {
-      return new NextResponse(input, {
+      const type = alreadyMp3 ? "audio/mpeg" : upstreamType || "application/octet-stream";
+      return new NextResponse(toResponseBody(input, type), {
         status: 200,
         headers: {
-          "Content-Type": alreadyMp3 ? "audio/mpeg" : upstreamType || "application/octet-stream",
+          "Content-Type": type,
           "Cache-Control": "private, max-age=300",
           "Content-Length": String(input.length),
           "X-Preview-Format": alreadyMp3 ? "mp3" : "original",
@@ -86,7 +88,7 @@ export async function GET(request: Request) {
       extensionFromNameOrType(target.pathname, upstreamType),
     );
 
-    return new NextResponse(mp3, {
+    return new NextResponse(toResponseBody(mp3, "audio/mpeg"), {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",

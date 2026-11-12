@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { formatBytes, sanitizeFilename } from "@/lib/download";
+import { formatBytes, sanitizeFilename, toResponseBody } from "@/lib/download";
 import {
   convertBufferToMp3,
   extensionFromNameOrType,
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       ? input
       : await convertBufferToMp3(input, extensionFromNameOrType(name, type));
 
-    return new NextResponse(output, {
+    return new NextResponse(toResponseBody(output, "audio/mpeg"), {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",

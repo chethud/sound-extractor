@@ -3,6 +3,7 @@ import {
   formatBytes,
   isUnauthorizedPreviewUrl,
   sanitizeFilename,
+  toResponseBody,
 } from "@/lib/download";
 import {
   convertBufferToMp3,
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
           extensionFromNameOrType(target.pathname, contentType),
         );
 
-    return new NextResponse(output, {
+    return new NextResponse(toResponseBody(output, "audio/mpeg"), {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",

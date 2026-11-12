@@ -1,3 +1,10 @@
+/** NextResponse BodyInit-compatible body from a Node Buffer. */
+export function toResponseBody(buffer: Buffer, contentType = "application/octet-stream"): Blob {
+  const copy = new Uint8Array(buffer.byteLength);
+  copy.set(buffer);
+  return new Blob([copy], { type: contentType });
+}
+
 export function sanitizeFilename(title: string | null | undefined, fallback = "audio"): string {
   const base = (title || fallback)
     .normalize("NFKD")

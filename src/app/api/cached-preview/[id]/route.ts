@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { toResponseBody } from "@/lib/download";
 import { isCachedPreviewId, readCachedPreview } from "@/lib/preview-cache";
 
 export const maxDuration = 30;
@@ -19,7 +20,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Cached MP3 preview not found." }, { status: 404 });
   }
 
-  return new NextResponse(bytes, {
+  return new NextResponse(toResponseBody(bytes, "audio/mpeg"), {
     status: 200,
     headers: {
       "Content-Type": "audio/mpeg",

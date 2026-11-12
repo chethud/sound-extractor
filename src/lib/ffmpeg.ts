@@ -16,9 +16,14 @@ export async function convertBufferToMp3(
   inputExtension = "bin",
 ): Promise<Buffer> {
   const id = randomUUID();
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "sound-mp3-"));
-  const inputPath = path.join(tmpDir, `${id}.${inputExtension.replace(/^\./, "")}`);
-  const outputPath = path.join(tmpDir, `${id}.mp3`);
+  const tmpDir = await fs.mkdtemp(
+    path.join(/*turbopackIgnore: true*/ os.tmpdir(), "sound-mp3-"),
+  );
+  const inputPath = path.join(
+    /*turbopackIgnore: true*/ tmpDir,
+    `${id}.${inputExtension.replace(/^\./, "")}`,
+  );
+  const outputPath = path.join(/*turbopackIgnore: true*/ tmpDir, `${id}.mp3`);
 
   try {
     await fs.writeFile(inputPath, input);
