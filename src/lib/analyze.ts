@@ -90,11 +90,16 @@ function collectPreviewFromSeen(seen: Set<string>): string | null {
 
 async function readAudioElementPreview(page: Page): Promise<string | null> {
   const srcs = await page.evaluate(() =>
-    [...document.querySelectorAll("audio")].map(
-      (audio) => audio.currentSrc || audio.getAttribute("src") || "",
-    ),
+    [...document.querySelectorAll("audio")]
+      .map((audio) => audio.currentSrc || audio.getAttribute("src") || "")
+      .filter(Boolean),
   );
-  return srcs.find((src) => src && isPublicPreviewAudioUrl(src)) || null;
+  // Prefer explicit preview assets; otherwise first public audio URL.
+  return (
+    srcs.find((src) => /\/preview\.(m4a|mp3|aac)(\?|$)/i.test(src)) ||
+    srcs.find((src) => src && isPublicPreviewAudioUrl(src)) ||
+    null
+  );
 }
 
 async function clickEpidemicStylePlay(page: Page): Promise<boolean> {
@@ -439,6 +444,12 @@ export async function analyzeEpidemicUrl(rawUrl: string): Promise<AnalyzeRespons
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
       locale: "en-US",
       viewport: { width: 1440, height: 900 },
+      extraHTTPHeaders: {
+        "Accept-Language": "en-US,en;q=0.9",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Upgrade-Insecure-Requests": "1",
+      },
     });
 
     const page = await context.newPage();
@@ -477,7 +488,10 @@ export async function analyzeEpidemicUrl(rawUrl: string): Promise<AnalyzeRespons
     }
 
     const status = response.status();
-    if (status >= 400) {
+    // Envato Elements often returns 403 to cloud/datacenter IPs (including Vercel).
+    // Still attempt extraction in case content/challenge HTML is present.
+    const blockedByProvider = status === 401 || status === 403 || status === 429;
+    if (status >= 400 && !blockedByProvider) {
       page.off("response", onPreviewResponse);
       return {
         ok: false,
@@ -487,6 +501,12 @@ export async function analyzeEpidemicUrl(rawUrl: string): Promise<AnalyzeRespons
     }
 
     await dismissCookieBanner(page);
+    // Envato cookie banner variants
+    const envatoAccept = page.locator('button:has-text("Accept all")').first();
+    if (await envatoAccept.isVisible().catch(() => false)) {
+      await envatoAccept.click().catch(() => undefined);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
 
     await Promise.race([
       page.waitForSelector("h1, meta[property='og:title'], audio, title", {
@@ -624,6 +644,21 @@ export async function analyzeEpidemicUrl(rawUrl: string): Promise<AnalyzeRespons
     const downloadAvailable = uniqueDownloads.length > 0;
 
     if (!title && !thumbnail && !description && !previewUrl) {
+      if (blockedByProvider && provider === "envato") {
+        return {
+          ok: false,
+          code: "page_unavailable",
+          error:
+            "Envato Elements blocked this hosted server (HTTP 403). Cloud IPs like Vercel are often denied. Use an app.envato.com sound URL, or run the app locally with npm run dev.",
+        };
+      }
+      if (blockedByProvider) {
+        return {
+          ok: false,
+          code: "page_unavailable",
+          error: `The provider blocked this server (HTTP ${status}). Try again locally or use a different public track URL.`,
+        };
+      }
       if (loginRequired) {
         return {
           ok: false,

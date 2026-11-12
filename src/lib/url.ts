@@ -22,6 +22,22 @@ export function detectProvider(url: URL): SoundProvider | null {
   return null;
 }
 
+export function normalizeSoundUrl(url: URL): URL {
+  const clean = new URL(url.toString());
+  // Strip analytics/share params that can trigger stricter bot checks.
+  for (const key of [...clean.searchParams.keys()]) {
+    if (
+      key.startsWith("_") ||
+      key.startsWith("utm_") ||
+      key === "fbclid" ||
+      key === "gclid"
+    ) {
+      clean.searchParams.delete(key);
+    }
+  }
+  return clean;
+}
+
 export function validateSoundUrl(raw: string): {
   ok: true;
   url: URL;
@@ -60,7 +76,7 @@ export function validateSoundUrl(raw: string): {
     };
   }
 
-  return { ok: true, url, provider };
+  return { ok: true, url: normalizeSoundUrl(url), provider };
 }
 
 /** @deprecated use validateSoundUrl */
@@ -76,12 +92,21 @@ export function extractTrackId(url: URL): string | null {
   const trackMatch = path.match(/\/(?:track|tracks|sound-effects|music)\/([^/?#]+)/i);
   if (trackMatch?.[1]) return decodeURIComponent(trackMatch[1]);
 
+  // Envato Elements slug: fun-tech-game-process-BWTJF2U
+  const slug = path.split("/").filter(Boolean).pop();
+  if (slug) return decodeURIComponent(slug);
+
   return null;
 }
 
 export function detectContentType(url: URL): "music" | "sound-effect" | "unknown" {
   const path = url.pathname.toLowerCase();
+  const host = url.hostname.toLowerCase();
   if (path.includes("sound-effect")) return "sound-effect";
   if (path.includes("/music") || path.includes("/track/")) return "music";
+  if (host.includes("elements.envato.com")) {
+    if (path.includes("sound") || path.includes("sfx")) return "sound-effect";
+    return "music";
+  }
   return "unknown";
 }

@@ -77,6 +77,10 @@ export function AnalyzerApp() {
           <p className="mt-3 max-w-2xl text-base text-zinc-400 sm:text-lg">
             Paste an Epidemic Sound or Envato URL and instantly analyze your audio preview.
           </p>
+          <p className="mt-2 max-w-2xl text-xs text-zinc-500">
+            Tip: on Vercel, Envato Elements pages may return 403. Prefer{" "}
+            <span className="text-zinc-400">app.envato.com/sound-effects/…</span> links, or run locally.
+          </p>
 
           <div className="mt-8 space-y-3">
             <label htmlFor="sound-url" className="sr-only">
