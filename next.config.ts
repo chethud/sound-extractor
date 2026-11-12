@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
     "fluent-ffmpeg",
     "ffmpeg-static",
   ],
+  outputFileTracingIncludes: {
+    "/api/analyze": [
+      "./node_modules/@sparticuz/chromium/**/*",
+      "./node_modules/playwright-core/**/*",
+    ],
+    "/src/app/api/analyze/route": [
+      "./node_modules/@sparticuz/chromium/**/*",
+      "./node_modules/playwright-core/**/*",
+    ],
+  },
   turbopack: {
     root: process.cwd(),
     rules: {

@@ -1,4 +1,6 @@
 import type { Browser } from "playwright-core";
+import { chromium as playwrightCore } from "playwright-core";
+import chromium from "@sparticuz/chromium";
 
 function isServerlessRuntime() {
   return Boolean(
@@ -10,26 +12,23 @@ function isServerlessRuntime() {
 
 export async function launchAnalyzerBrowser(): Promise<Browser> {
   if (isServerlessRuntime()) {
-    const [{ chromium }, chromiumPack] = await Promise.all([
-      import("playwright-core"),
-      import("@sparticuz/chromium"),
-    ]);
+    // Disable WebGL graphics path on serverless Chromium.
+    (chromium as { setGraphicsMode?: boolean }).setGraphicsMode = false;
 
-    const executablePath = await chromiumPack.default.executablePath();
-
-    return chromium.launch({
+    return playwrightCore.launch({
       args: [
-        ...chromiumPack.default.args,
+        ...chromium.args,
         "--disable-blink-features=AutomationControlled",
         "--disable-dev-shm-usage",
+        "--single-process",
       ],
-      executablePath,
+      executablePath: await chromium.executablePath(),
       headless: true,
     });
   }
 
-  const { chromium } = await import("playwright");
-  return chromium.launch({
+  const { chromium: localChromium } = await import("playwright");
+  return localChromium.launch({
     headless: true,
     args: [
       "--disable-blink-features=AutomationControlled",
