@@ -3,7 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
-  serverExternalPackages: ["playwright", "fluent-ffmpeg", "ffmpeg-static"],
+  serverExternalPackages: [
+    "playwright",
+    "playwright-core",
+    "@sparticuz/chromium",
+    "fluent-ffmpeg",
+    "ffmpeg-static",
+  ],
   turbopack: {
     root: process.cwd(),
     rules: {

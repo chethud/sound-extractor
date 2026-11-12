@@ -1,4 +1,4 @@
-import { chromium, type Page } from "playwright";
+import type { Page } from "playwright-core";
 import * as cheerio from "cheerio";
 import type { AnalyzeResponse, DownloadOption } from "./types";
 import {
@@ -8,6 +8,7 @@ import {
   type SoundProvider,
 } from "./url";
 import { materializePreviewAsMp3 } from "./preview-cache";
+import { launchAnalyzerBrowser } from "./browser";
 
 const NAVIGATION_TIMEOUT_MS = 45000;
 const SELECTOR_WAIT_MS = 12000;
@@ -431,10 +432,7 @@ export async function analyzeEpidemicUrl(rawUrl: string): Promise<AnalyzeRespons
 
   let browser;
   try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ["--disable-blink-features=AutomationControlled"],
-    });
+    browser = await launchAnalyzerBrowser();
 
     const context = await browser.newContext({
       userAgent:

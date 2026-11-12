@@ -35,7 +35,18 @@ export function AnalyzerApp() {
         body: JSON.stringify({ url }),
       });
 
-      const data = (await response.json()) as AnalyzeResponse;
+      const raw = await response.text();
+      let data: AnalyzeResponse | null = null;
+      try {
+        data = JSON.parse(raw) as AnalyzeResponse;
+      } catch {
+        setError(
+          response.ok
+            ? "Analyzer returned an invalid response."
+            : `Analyzer service error (${response.status}). The hosted browser runtime may still be starting—try again in a moment.`,
+        );
+        return;
+      }
 
       if (!data.ok) {
         setError(data.error);

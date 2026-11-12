@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         {
           ok: false,
           code: "invalid_url",
-          error: "Please paste an Epidemic Sound URL.",
+          error: "Please paste an Epidemic Sound or Envato URL.",
         },
         { status: 400 },
       );
@@ -37,11 +37,12 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected server error";
+    console.error("[api/analyze]", message);
     return NextResponse.json(
       {
         ok: false,
         code: "unknown",
-        error: message,
+        error: `Analyzer failed on the server: ${message}`,
       },
       { status: 500 },
     );
